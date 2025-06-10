@@ -1,51 +1,38 @@
 const express = require("express")
-const bcrypt = require("bcrypt")
-const cookieParser = require("cookie-parser")
 
+const cookieParser = require("cookie-parser")
+const authRouter = require("./router/authRouter")
+const cors = require('cors')
 const app = express()
 const dbConnection = require('./config/dbConnection')
-const UserModel = require('./Schema/UserSchema')
-const {userAuth} = require('./middleware/userAuth')
-const {validate} = require('./helper/validate')
+const userRouter = require("./router/profileRouter")
+const connectionRequestRouter = require("./router/connectionRequestRouter")
+const feedRouter = require("./router/feedRouter")
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true,
+  
+};
 
+// define all global middleware
+app.use(cors(corsOptions));
 app.use(express.json())
 app.use(cookieParser())
 
+ 
+// defining routes here
+app.use("/",authRouter)
+app.use("/",userRouter)
+app.use("/",feedRouter)
+app.use("/",connectionRequestRouter)
 
-app.post("/signUp",async (req,res)=>{
-  try{
-
-    const user = req.body
-    const {password} = user
-    console.log(user)
-
-    const hash = bcrypt.hashSync(password,10);
-
-    console.log(hash,"hashPassword")
-    const doc = new UserModel({...user,"password":hash})
-    await doc.save()
-   res.send("User Created Sucessfully")
-   }
-  catch(e)
-  {
-   res.status(404).send("there is issue in creating user" + e.message)
-  }
+app.use("/",(req,res)=>{
+  res.send("Hello")
 })
 
-app.post("/login",userAuth, async (req, res) => {
-  try {
-    await validate(req);  
-    res.cookie("token","123djedejdnejdb62135612")
-    res.send("Login successful");
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
+app.use((err, req, res, next) => {
+  res.status(401).json({ error: err.message || "Something went wrong" });
 });
-
-app.use('/',(req,res)=>{
-    res.send("Hello")
-})
-
 
 const startServer = async ()=>{
   try{

@@ -1,6 +1,7 @@
 const { request } = require("express");
 const { default: mongoose } = require("mongoose");
 const validator = require("validator")
+const bcrypt = require("bcrypt")
 
 
 
@@ -12,7 +13,8 @@ const userSchema = mongoose.Schema({
     age:{type:Number,min:18,max:60},
     
     gender:{type:String,validate:(value)=>{
-        console.log(value,"gender value")
+      
+      
       if(value !== 'male' && value !== 'female' && value !== 'other')
         throw new Error("gender is not valid, it should be either male, female or other")
     },required:true},
@@ -34,6 +36,14 @@ const userSchema = mongoose.Schema({
     }
 })
 
+userSchema.methods.validatePassword =  function (passwordByUser)
+{
+ const user= this
+ 
+ const isPasswordValid =  bcrypt.compareSync(passwordByUser, user.password);
+     
+ return isPasswordValid
+}
 
 const UserModel = mongoose.model("User",userSchema)
 
